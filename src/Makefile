@@ -15,6 +15,7 @@ include Makefile.global
 SUBDIRS = \
 	common \
 	port \
+	hiredis \
 	timezone \
 	backend \
 	backend/utils/mb/conversion_procs \

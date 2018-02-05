@@ -2,7 +2,7 @@
 #
 # Makefile for the postgres backend
 #
-# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/backend/Makefile
@@ -36,7 +36,8 @@ endif
 endif
 
 OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a \
-       $(top_builddir)/src/common/libpgcommon_srv.a
+       $(top_builddir)/src/common/libpgcommon_srv.a \
+       $(top_builddir)/src/hiredis/libhiredis.a
 
 # We put libpgport and libpgcommon into OBJS, so remove it from LIBS; also add
 # libldap and ICU

@@ -49,8 +49,12 @@ extern int	forkname_chars(const char *str, ForkNumber *fork);
  * Stuff for computing filesystem pathnames for relations.
  */
 extern char *GetDatabasePath(Oid dbNode, Oid spcNode);
+extern char *GetDatabaseKey(Oid dbNode, Oid spcNode);
 
 extern char *GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
+				int backendId, ForkNumber forkNumber);
+
+extern char *GetRelKey(Oid dbNode, Oid spcNode, Oid relNode,
 				int backendId, ForkNumber forkNumber);
 
 /*
