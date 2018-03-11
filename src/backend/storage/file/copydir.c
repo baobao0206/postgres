@@ -24,6 +24,7 @@
 
 #include "storage/copydir.h"
 #include "storage/fd.h"
+#include "storage/redis.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 
@@ -36,88 +37,98 @@
 void
 copydir(char *fromdir, char *todir, bool recurse)
 {
-	DIR		   *xldir;
-	struct dirent *xlde;
-	char		fromfile[MAXPGPATH * 2];
-	char		tofile[MAXPGPATH * 2];
+    DIR		   *xldir;
+    struct dirent *xlde;
+    char		fromfile[MAXPGPATH * 2];
+    char		tofile[MAXPGPATH * 2];
 
-	if (mkdir(todir, S_IRWXU) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create directory \"%s\": %m", todir)));
+    char from_prfix[REDIS_KEY_MAX_LEN];
+    char to_prfix[REDIS_KEY_MAX_LEN];
 
-	xldir = AllocateDir(fromdir);
+    if (mkdir(todir, S_IRWXU) != 0)
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                    errmsg("could not create directory \"%s\": %m", todir)));
 
-	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
-	{
-		struct stat fst;
+    sprintf(from_prfix, "%s/", fromdir);
+    sprintf(to_prfix, "%s/", todir);
+    redis_copy_keys(from_prfix, to_prfix);
 
-		/* If we got a cancel signal during the copy of the directory, quit */
-		CHECK_FOR_INTERRUPTS();
+    xldir = AllocateDir(fromdir);
 
-		if (strcmp(xlde->d_name, ".") == 0 ||
-			strcmp(xlde->d_name, "..") == 0)
-			continue;
+    while ((xlde = ReadDir(xldir, fromdir)) != NULL)
+    {
+        struct stat fst;
 
-		snprintf(fromfile, sizeof(fromfile), "%s/%s", fromdir, xlde->d_name);
-		snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
+        /* If we got a cancel signal during the copy of the directory, quit */
+        CHECK_FOR_INTERRUPTS();
 
-		if (lstat(fromfile, &fst) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", fromfile)));
+        if (strcmp(xlde->d_name, ".") == 0 ||
+            strcmp(xlde->d_name, "..") == 0)
+            continue;
 
-		if (S_ISDIR(fst.st_mode))
-		{
-			/* recurse to handle subdirectories */
-			if (recurse)
-				copydir(fromfile, tofile, true);
-		}
-		else if (S_ISREG(fst.st_mode))
-			copy_file(fromfile, tofile);
-	}
-	FreeDir(xldir);
+        snprintf(fromfile, sizeof(fromfile), "%s/%s", fromdir, xlde->d_name);
+        snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
 
-	/*
-	 * Be paranoid here and fsync all files to ensure the copy is really done.
-	 * But if fsync is disabled, we're done.
-	 */
-	if (!enableFsync)
-		return;
+        if (lstat(fromfile, &fst) < 0)
+            ereport(ERROR,
+                    (errcode_for_file_access(),
+                        errmsg("could not stat file \"%s\": %m", fromfile)));
 
-	xldir = AllocateDir(todir);
+        if (S_ISDIR(fst.st_mode))
+        {
+            /* recurse to handle subdirectories */
+            if (recurse)
+                copydir(fromfile, tofile, true);
+        }
+        else if (S_ISREG(fst.st_mode))
+            copy_file(fromfile, tofile);
+    }
+    FreeDir(xldir);
 
-	while ((xlde = ReadDir(xldir, todir)) != NULL)
-	{
-		struct stat fst;
+    /*
+     * Be paranoid here and fsync all files to ensure the copy is really done.
+     * But if fsync is disabled, we're done.
+     */
+    if (!enableFsync)
+        return;
 
-		if (strcmp(xlde->d_name, ".") == 0 ||
-			strcmp(xlde->d_name, "..") == 0)
-			continue;
+    xldir = AllocateDir(todir);
 
-		snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
+    while ((xlde = ReadDir(xldir, todir)) != NULL)
+    {
+        struct stat fst;
 
-		/*
-		 * We don't need to sync subdirectories here since the recursive
-		 * copydir will do it before it returns
-		 */
-		if (lstat(tofile, &fst) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", tofile)));
+        if (strcmp(xlde->d_name, ".") == 0 ||
+            strcmp(xlde->d_name, "..") == 0)
+            continue;
 
-		if (S_ISREG(fst.st_mode))
-			fsync_fname(tofile, false);
-	}
-	FreeDir(xldir);
+        snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
 
-	/*
-	 * It's important to fsync the destination directory itself as individual
-	 * file fsyncs don't guarantee that the directory entry for the file is
-	 * synced. Recent versions of ext4 have made the window much wider but
-	 * it's been true for ext3 and other filesystems in the past.
-	 */
-	fsync_fname(todir, true);
+        /*
+         * We don't need to sync subdirectories here since the recursive
+         * copydir will do it before it returns
+         */
+        if (lstat(tofile, &fst) < 0)
+            ereport(ERROR,
+                    (errcode_for_file_access(),
+                        errmsg("could not stat file \"%s\": %m", tofile)));
+
+        if (S_ISREG(fst.st_mode))
+            fsync_fname(tofile, false);
+    }
+    FreeDir(xldir);
+
+    /*
+     * It's important to fsync the destination directory itself as individual
+     * file fsyncs don't guarantee that the directory entry for the file is
+     * synced. Recent versions of ext4 have made the window much wider but
+     * it's been true for ext3 and other filesystems in the past.
+     */
+    fsync_fname(todir, true);
+
+
+
 }
 
 /*

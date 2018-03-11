@@ -285,6 +285,8 @@ else
 endif
 LDFLAGS += @LDFLAGS@
 
+lib_hiredis = -L$(top_builddir)/src/hiredis -lhiredis
+
 LDFLAGS_EX = @LDFLAGS_EX@
 # LDFLAGS_SL might have already been assigned by calling makefile
 LDFLAGS_SL += @LDFLAGS_SL@

@@ -4,7 +4,7 @@
  *	  storage manager switch public interface declarations.
  *
  *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/smgr.h
@@ -143,5 +143,29 @@ extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 					 BlockNumber segno);
 extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);
 extern void ForgetDatabaseFsyncRequests(Oid dbid);
+
+
+extern void rdinit(void);
+extern void rdclose(SMgrRelation reln, ForkNumber forknum);
+extern void rdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
+extern bool rdexists(SMgrRelation reln, ForkNumber forknum);
+extern void rdunlink(RelFileNodeBackend rnode, ForkNumber forknum, bool isRedo);
+extern void rdextend(SMgrRelation reln, ForkNumber forknum,
+					 BlockNumber blocknum, char *buffer, bool skipFsync);
+extern void rdprefetch(SMgrRelation reln, ForkNumber forknum,
+					   BlockNumber blocknum);
+extern void rdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+				   char *buffer);
+extern void rdwrite(SMgrRelation reln, ForkNumber forknum,
+				    BlockNumber blocknum, char *buffer, bool skipFsync);
+extern void rdwriteback(SMgrRelation reln, ForkNumber forknum,
+						BlockNumber blocknum, BlockNumber nblocks);
+extern BlockNumber rdnblocks(SMgrRelation reln, ForkNumber forknum);
+extern void rdtruncate(SMgrRelation reln, ForkNumber forknum,
+					   BlockNumber nblocks);
+extern void rdimmedsync(SMgrRelation reln, ForkNumber forknum);
+extern void rdpreckpt(void);
+extern void rdsync(void);
+extern void rdpostckpt(void);
 
 #endif							/* SMGR_H */

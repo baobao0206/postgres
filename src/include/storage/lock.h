@@ -4,7 +4,7 @@
  *	  POSTGRES low-level lock mechanism
  *
  *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lock.h
@@ -318,7 +318,7 @@ typedef struct LOCK
  * state: we only track which backend(s) hold the lock.  This is OK since a
  * backend can never block itself.
  *
- * The holdMask field shows the already-granted locks represented by this
+     * The holdMask field shows the already-granted locks represented by this
  * proclock.  Note that there will be a proclock object, possibly with
  * zero holdMask, for any lock that the process is currently waiting on.
  * Otherwise, proclock objects whose holdMasks are zero are recycled

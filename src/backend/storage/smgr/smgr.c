@@ -6,7 +6,7 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -67,9 +67,9 @@ typedef struct f_smgr
 
 static const f_smgr smgrsw[] = {
 	/* magnetic disk */
-	{mdinit, NULL, mdclose, mdcreate, mdexists, mdunlink, mdextend,
-		mdprefetch, mdread, mdwrite, mdwriteback, mdnblocks, mdtruncate,
-		mdimmedsync, mdpreckpt, mdsync, mdpostckpt
+	{rdinit, NULL, rdclose, rdcreate, rdexists, rdunlink, rdextend,
+		rdprefetch, rdread, rdwrite, rdwriteback, rdnblocks, rdtruncate,
+		rdimmedsync, rdpreckpt, rdsync, rdpostckpt
 	}
 };
 
