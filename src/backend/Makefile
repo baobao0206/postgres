@@ -36,7 +36,9 @@ endif
 endif
 
 OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a \
-       $(top_builddir)/src/common/libpgcommon_srv.a
+       $(top_builddir)/src/common/libpgcommon_srv.a \
+       $(top_builddir)/src/leveldb/libleveldb.a \
+       $(top_builddir)/src/leveldb/libmemenv.a
 
 # We put libpgport and libpgcommon into OBJS, so remove it from LIBS; also add
 # libldap and ICU
@@ -56,6 +58,7 @@ all: submake-libpgport submake-schemapg postgres $(POSTGRES_IMP)
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), aix)
+CC=g++
 
 postgres: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(call expand_subsys,$^) $(LIBS) -o $@

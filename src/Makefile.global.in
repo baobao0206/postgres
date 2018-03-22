@@ -285,6 +285,8 @@ else
 endif
 LDFLAGS += @LDFLAGS@
 
+lib_leveldb = -L$(top_builddir)/src/leveldb -lleveldb -l memenv
+
 LDFLAGS_EX = @LDFLAGS_EX@
 # LDFLAGS_SL might have already been assigned by calling makefile
 LDFLAGS_SL += @LDFLAGS_SL@
